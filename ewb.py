@@ -19,4 +19,12 @@ async def on_ready():
 async def hi(ctx):
     await ctx.channel.send("henlo")
 
+@bot.command()
+async def ping(reallylongvariablename):
+	await reallylongvariablename.channel.send("pong")
+
+@bot.command()
+async def bri(rtx):
+	await rtx.channel.send(rtx.author.mention + " frick")
+
 bot.run(TOKEN)
