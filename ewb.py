@@ -31,12 +31,18 @@ async def bri(ctx):
     await ctx.channel.send(rtx.author.mention + " frick")
 
 # admin commands
+async def verify(ctx, roleName):
+	role = get(ctx.message.guild.roles, name = roleName)
+
+	if (role in ctx.author.roles):
+		return True
+	else:
+		await ctx.channel.send("You do not have proper permissions to use that command!")
+	return False
+
 @bot.command()
 async def create(ctx, message, message2, message3):
-	role = get(ctx.message.guild.roles, name = "ewb bot")
-	if (role in ctx.author.roles):
+	if (await verify(ctx, "ewb bot")):
 		await ctx.channel.send(message + " " + message2 + " " + message3)
-	else:
-		await ctx.channel.send("improper roles")
 
 bot.run(TOKEN)
