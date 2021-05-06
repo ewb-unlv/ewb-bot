@@ -22,18 +22,17 @@ async def on_member_join(member):
 	role = get(member.guild.roles, name="EWB Members")
 	await member.add_roles(role)
 
-@bot.command()
+@bot.command(aliases = ['hello', 'hey you', 'hey', 'oi'])
 async def hi(ctx):
     await ctx.channel.send("henlo")
-
-
-@bot.command()
-async def ping(reallylongvariablename):
-    await reallylongvariablename.channel.send("pong")
-
 
 @bot.command()
 async def bri(rtx):
     await rtx.channel.send(rtx.author.mention + " frick")
+
+# admin commands
+@bot.command()
+async def create(rtx, message, message2, message3):
+	await rtx.channel.send(message + " " + message2 + " " + message3)
 
 bot.run(TOKEN)
