@@ -79,10 +79,11 @@ async def create(ctx, *, json_message):
 		if "reactions" in json_object:
 			hasReaction = True
 
-		if (hasRole and hasReaction):
-			if (len(json_object["roles"]) != len(json_object["reactions"])):
-				warn(ctx, "Roles and reactions must be equal!")
-				return
+		#if (hasRole and hasReaction):
+		#	if (len(json_object["roles"]) != len(json_object["reactions"])):
+		#		warn(ctx, "Roles and reactions must be equal!")
+		#		return
+
 
 		# check that all roles exist
 		#for role in json_object["roles"]:
@@ -104,6 +105,15 @@ async def create(ctx, *, json_message):
 		if (ref):
 			await ctx.message.delete()
 
-		await ref.add_reaction('🧠')#get(ctx.guild.emojis, name = "brain"))
-
+		#await ref.add_reaction('🧠')#get(ctx.guild.emojis, name = "brain"))
+		for emoji in json_object["reactions"]:
+			try:
+				await ref.add_reaction(emoji)
+			except:
+				try:
+					emoji_token = get(ctx.guild.emojis, name = emoji)
+					await ref.add_reaction(emoji_token)#"\\" + emoji)
+				except:
+					await warn(ctx, "Some of those emojis are not allowed!")
+					return
 bot.run(TOKEN)
