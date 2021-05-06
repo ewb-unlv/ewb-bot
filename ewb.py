@@ -1,5 +1,6 @@
 import discord
 import os
+import json
 from discord.ext import commands
 from discord.utils import get
 from dotenv import load_dotenv
@@ -28,7 +29,7 @@ async def hi(ctx):
 
 @bot.command()
 async def bri(ctx):
-    await ctx.channel.send(rtx.author.mention + " frick")
+    await ctx.channel.send(ctx.author.mention + " frick")
 
 # admin commands
 async def verify(ctx, roleName):
@@ -40,9 +41,42 @@ async def verify(ctx, roleName):
 		await ctx.channel.send("You do not have proper permissions to use that command!")
 	return False
 
+async def warn(ctx, msg):
+	await ctx.channel.send(ctx.author.mention + " " + msg)
+
 @bot.command()
-async def create(ctx, message, message2, message3):
+async def create(ctx, *, json_message):
 	if (await verify(ctx, "ewb bot")):
-		await ctx.channel.send(message + " " + message2 + " " + message3)
+		try:
+			json_object = json.loads(json_message)
+		except:
+			await warn(ctx, "Incorrect JSON format!")
+			await warn(ctx, json_message)
+			return
+
+		# json object created
+		try:
+			heading = json_object["heading"]
+		except:
+			await warn(ctx, "No 'heading' provided!")
+			return
+
+		description = None
+		color = 0xABCDEF # did this as joke but it actually look good lol
+
+		if "description" in json_object:
+			description = json_object["description"]
+
+		if "color" in json_object:
+			color = int(json_object["color"], 16)
+
+		embed_object = discord.Embed(
+			title = heading,
+			description = description,
+			color = color,
+		)
+
+		if (await ctx.send(embed = embed_object)):
+			await ctx.message.delete()
 
 bot.run(TOKEN)
