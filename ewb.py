@@ -70,13 +70,40 @@ async def create(ctx, *, json_message):
 		if "color" in json_object:
 			color = int(json_object["color"], 16)
 
+		hasRole = False
+		hasReaction = False
+
+		if "roles" in json_object:
+			hasRole = True
+		
+		if "reactions" in json_object:
+			hasReaction = True
+
+		if (hasRole and hasReaction):
+			if (len(json_object["roles"]) != len(json_object["reactions"])):
+				warn(ctx, "Roles and reactions must be equal!")
+				return
+
+		# check that all roles exist
+		#for role in json_object["roles"]:
+
+		# check that reactions are valid
+
+		# put roles in description
+
+		# add reactions
+
 		embed_object = discord.Embed(
 			title = heading,
 			description = description,
 			color = color,
 		)
 
-		if (await ctx.send(embed = embed_object)):
+		ref = await ctx.send(embed = embed_object)
+
+		if (ref):
 			await ctx.message.delete()
+
+		await ref.add_reaction('🧠')#get(ctx.guild.emojis, name = "brain"))
 
 bot.run(TOKEN)
