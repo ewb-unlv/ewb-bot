@@ -11,24 +11,16 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 intents = discord.Intents.default()
 intents.members = True
 
-client = discord.Client(intents = intents)
-
-bot = commands.Bot(command_prefix='^')
-
+bot = commands.Bot(command_prefix='^', intents = intents)
 
 @bot.event
 async def on_ready():
-    print("ewb will save the world")
-    print(get(bot.guilds[0].roles, name="EWB Members"))
-    print(intents.members)
+    print("EWB Client has connected :D")
 
-@client.event
+@bot.event
 async def on_member_join(member):
-	print("SOMEONE JOINED")
-	#print(get(member.guild.roles, name = "EWB Members"))
-	#role = get(member.guild.roles, name="EWB Members")
-	#await member.add_roles(role)
-	await member.channel.send("test")
+	role = get(member.guild.roles, name="EWB Members")
+	await member.add_roles(role)
 
 @bot.command()
 async def hi(ctx):
