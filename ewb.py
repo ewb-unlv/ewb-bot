@@ -8,8 +8,8 @@ load_dotenv()
 
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-#intents = discord.Intents.default()
-#intents.members = True
+intents = discord.Intents.default()
+intents.members = True
 
 bot = commands.Bot(command_prefix='^')
 
@@ -17,12 +17,15 @@ bot = commands.Bot(command_prefix='^')
 @bot.event
 async def on_ready():
     print("ewb will save the world")
+    print(get(bot.guilds[0].roles, name="EWB Members"))
+    print(intents.members)
 
-
-@bot.event
+@discord.client.event
 async def on_member_join(member):
-    role = get(member.guild.roles, name='EWB Members')
-    await member.add_roles(role)
+	print(get(member.guild.roles, name = "EWB Members"))
+	print("SOMEONE JOINED")
+	role = get(member.guild.roles, name="EWB Members")
+	await member.add_roles(role)
 
 
 @bot.command()
