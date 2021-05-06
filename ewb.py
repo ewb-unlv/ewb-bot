@@ -27,12 +27,16 @@ async def hi(ctx):
     await ctx.channel.send("henlo")
 
 @bot.command()
-async def bri(rtx):
-    await rtx.channel.send(rtx.author.mention + " frick")
+async def bri(ctx):
+    await ctx.channel.send(rtx.author.mention + " frick")
 
 # admin commands
 @bot.command()
-async def create(rtx, message, message2, message3):
-	await rtx.channel.send(message + " " + message2 + " " + message3)
+async def create(ctx, message, message2, message3):
+	role = get(ctx.message.guild.roles, name = "ewb bot")
+	if (role in ctx.author.roles):
+		await ctx.channel.send(message + " " + message2 + " " + message3)
+	else:
+		await ctx.channel.send("improper roles")
 
 bot.run(TOKEN)
