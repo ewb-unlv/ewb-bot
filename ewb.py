@@ -104,15 +104,15 @@ async def create(ctx, *, json_message):
 
 		if (ref):
 			await ctx.message.delete()
-
-		#await ref.add_reaction('🧠')#get(ctx.guild.emojis, name = "brain"))
+			
 		for emoji in json_object["reactions"]:
 			try:
 				await ref.add_reaction(emoji)
 			except:
 				try:
-					emoji_token = get(ctx.guild.emojis, name = emoji)
-					await ref.add_reaction(emoji_token)#"\\" + emoji)
+					#emoji_token = get(ctx.guild.emojis, name = emoji)
+					emoji_token = bot.get_emoji(id = emoji)
+					await ref.add_reaction(emoji_token)
 				except:
 					await warn(ctx, "Some of those emojis are not allowed!")
 					return
