@@ -61,7 +61,7 @@ async def create(ctx, *, json_message):
 			await warn(ctx, "No 'heading' provided!")
 			return
 
-		description = None
+		description = ""
 		color = 0xABCDEF # did this as joke but it actually look good lol
 
 		if "description" in json_object:
@@ -79,17 +79,26 @@ async def create(ctx, *, json_message):
 		if "reactions" in json_object:
 			hasReaction = True
 
-		#if (hasRole and hasReaction):
-		#	if (len(json_object["roles"]) != len(json_object["reactions"])):
-		#		warn(ctx, "Roles and reactions must be equal!")
-		#		return
+		if (hasRole and not hasReaction) or (hasReaction and not hasRole):
+			await warn(ctx, "Roles and reactions must be equal!")
+			return
+		elif (hasRole and hasReaction):
+			if (len(json_object["roles"]) != len(json_object["reactions"])):
+				await warn(ctx, "Roles and reactions must be equal!")
+				return
 
+			# check that all roles exist
+			roleCount = 0
+			for roleName in json_object["roles"]:
+				role = get(ctx.message.guild.roles, name = roleName)
 
-		# check that all roles exist
-		#for role in json_object["roles"]:
+				if not role:
+					await warn(ctx, "Role '" + roleName + "' does not exist in this server!")
+					return
 
-		# check that reactions are valid
+				description = description + "\n" + json_object["reactions"][roleCount] + " = " + roleName
 
+				roleCount = roleCount + 1
 		# put roles in description
 
 		# add reactions
@@ -104,7 +113,7 @@ async def create(ctx, *, json_message):
 
 		if (ref):
 			await ctx.message.delete()
-			
+
 		for emoji in json_object["reactions"]:
 			try:
 				await ref.add_reaction(emoji)
