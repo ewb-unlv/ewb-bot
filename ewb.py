@@ -44,6 +44,19 @@ async def verify(ctx, roleName):
 async def warn(ctx, msg):
 	await ctx.channel.send(ctx.author.mention + " " + msg)
 
+async def attempt_add_reaction(ref, reactions_object):
+	for emoji in reactions_object:
+		try:
+			await ref.add_reaction(emoji)
+		except:
+			try:
+				emoji_token = bot.get_emoji(id = emoji)
+				await ref.add_reaction(emoji_token)
+			except:
+				await warn(ctx, "Some of those emojis are not allowed!")
+				return
+
+
 @bot.command()
 async def create(ctx, *, json_message):
 	if (await verify(ctx, "ewb bot")):
@@ -114,15 +127,38 @@ async def create(ctx, *, json_message):
 		if (ref):
 			await ctx.message.delete()
 
-		for emoji in json_object["reactions"]:
-			try:
-				await ref.add_reaction(emoji)
-			except:
-				try:
-					#emoji_token = get(ctx.guild.emojis, name = emoji)
-					emoji_token = bot.get_emoji(id = emoji)
-					await ref.add_reaction(emoji_token)
-				except:
-					await warn(ctx, "Some of those emojis are not allowed!")
-					return
+		@bot.event
+		async def on_reaction_add(reaction, user):
+			if (reaction.message == ref):
+				# add new listener if the bot is the reactor
+				if (bot.user == user):
+					# add role on reaction to bot emoji
+					@bot.event
+					async def on_raw_reaction_add(payload):
+						roleIndex = 0
+						for reaction_emoji in json_object["reactions"]:
+							if ((bot.user.id != payload.user_id) and (payload.message_id == ref.id) and (payload.emoji.name == reaction_emoji)):
+								role = get(user.guild.roles, name=json_object["roles"][roleIndex])
+								await payload.member.add_roles(role)
+
+							roleIndex += 1
+
+					# remove role on remove_reaction from bot emoji
+					@bot.event
+					async def on_raw_reaction_remove(payload):
+						roleIndex = 0
+						for reaction_emoji in json_object["reactions"]:
+							if ((bot.user.id != payload.user_id) and (payload.message_id == ref.id) and (payload.emoji.name == reaction_emoji)):
+								role = get(user.guild.roles, name=json_object["roles"][roleIndex])
+								member = ref.guild.get_member(payload.user_id)
+								await member.remove_roles(role)
+
+							roleIndex += 1
+
+		# adds reactions to message (aka ref)
+		await attempt_add_reaction(ref, json_object["reactions"])
+		
+
+		
+
 bot.run(TOKEN)
