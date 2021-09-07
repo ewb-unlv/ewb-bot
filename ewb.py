@@ -44,7 +44,7 @@ async def verify(ctx, roleName):
 async def warn(ctx, msg):
 	await ctx.channel.send(ctx.author.mention + " " + msg)
 
-async def attempt_add_reaction(ref, reactions_object):
+async def attempt_add_reaction(ref, reactions_object, ctx):
 	for emoji in reactions_object:
 		try:
 			await ref.add_reaction(emoji)
@@ -56,6 +56,49 @@ async def attempt_add_reaction(ref, reactions_object):
 				await warn(ctx, "Some of those emojis are not allowed!")
 				return
 
+# TODO(dillon): If this bot scales larger, this command should also search through a "guild" list
+# so we can avoid searching through all active_messages in every server each time we run this event.
+# This could also be used to potentially throttle servers with too many reaction listeners if necessary.
+
+# Messages with active listeners for emoji reactions
+active_messages = []
+
+# Keyed by message_id = []
+reaction_list = {}
+role_list = {}
+
+async def validate_reaction(message_to_check, user):
+	for message in active_messages:
+		if (message_to_check == message):
+			if (bot.user == user):
+				return True
+	return False
+
+@bot.event
+async def on_raw_reaction_add(payload):
+	roleIndex = 0
+	for message in active_messages:
+ 		if (payload.message_id == message.id):
+ 			for reaction_emoji in reaction_list[payload.message_id]:
+ 				if ((bot.user.id != payload.user_id) and (payload.emoji.name == reaction_emoji)):
+ 					role = get(payload.member.guild.roles, name=role_list[payload.message_id][roleIndex])
+ 					await payload.member.add_roles(role)
+
+ 				roleIndex += 1
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+	roleIndex = 0
+	for message in active_messages:
+ 		if (payload.message_id == message.id):
+ 			for reaction_emoji in reaction_list[payload.message_id]:
+ 				if ((bot.user.id != payload.user_id) and (payload.emoji.name == reaction_emoji)):
+ 					curr_guild = bot.get_guild(payload.guild_id)
+ 					member = curr_guild.get_member(payload.user_id)
+ 					role = get(member.guild.roles, name=role_list[payload.message_id][roleIndex])
+ 					await member.remove_roles(role)
+
+ 				roleIndex += 1
 
 @bot.command()
 async def create(ctx, *, json_message):
@@ -109,12 +152,10 @@ async def create(ctx, *, json_message):
 					await warn(ctx, "Role '" + roleName + "' does not exist in this server!")
 					return
 
+				# put roles in description
 				description = description + "\n" + json_object["reactions"][roleCount] + " = " + roleName
 
 				roleCount = roleCount + 1
-		# put roles in description
-
-		# add reactions
 
 		embed_object = discord.Embed(
 			title = heading,
@@ -127,38 +168,25 @@ async def create(ctx, *, json_message):
 		if (ref):
 			await ctx.message.delete()
 
-		@bot.event
-		async def on_reaction_add(reaction, user):
-			if (reaction.message == ref):
-				# add new listener if the bot is the reactor
-				if (bot.user == user):
-					# add role on reaction to bot emoji
-					@bot.event
-					async def on_raw_reaction_add(payload):
-						roleIndex = 0
-						for reaction_emoji in json_object["reactions"]:
-							if ((bot.user.id != payload.user_id) and (payload.message_id == ref.id) and (payload.emoji.name == reaction_emoji)):
-								role = get(user.guild.roles, name=json_object["roles"][roleIndex])
-								await payload.member.add_roles(role)
+		# No need to listen if the message isn't meant for reacting
+		if (hasRole and hasReaction):
+			active_messages.append(ref)
 
-							roleIndex += 1
+			reaction_emoji_list = []
 
-					# remove role on remove_reaction from bot emoji
-					@bot.event
-					async def on_raw_reaction_remove(payload):
-						roleIndex = 0
-						for reaction_emoji in json_object["reactions"]:
-							if ((bot.user.id != payload.user_id) and (payload.message_id == ref.id) and (payload.emoji.name == reaction_emoji)):
-								role = get(user.guild.roles, name=json_object["roles"][roleIndex])
-								member = ref.guild.get_member(payload.user_id)
-								await member.remove_roles(role)
+			for reaction_emoji in json_object["reactions"]:
+				reaction_emoji_list.append(reaction_emoji)
 
-							roleIndex += 1
+			reaction_list[ref.id] = reaction_emoji_list
 
-		# adds reactions to message (aka ref)
-		await attempt_add_reaction(ref, json_object["reactions"])
+			raw_role_list = []
+
+			for role in json_object["roles"]:
+				raw_role_list.append(role)
+
+			role_list[ref.id] = raw_role_list
+
+			# adds reactions to message (aka ref)
+			await attempt_add_reaction(ref, json_object["reactions"], ctx)
 		
-
-		
-
 bot.run(TOKEN)
